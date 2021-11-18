@@ -4,15 +4,22 @@ import { resizeHandler } from './table.resize'
 import { isCell, shouldResize } from './table.functions'
 import { TableSelection } from './TableSelection'
 import {$} from '@core/dom'
-import { matrix } from './table.functions'
+import { matrix, nextSelector } from './table.functions'
 
 export class Table extends ExcelComponent {
   static className = 'excel__table'
 
-  constructor($root) {
+  constructor($root, options) {
     super($root, {
-      listeners: ['mousedown']
+      name: 'Table',
+      listeners: ['mousedown', 'keydown', 'input'],
+      ...options
     })
+  }
+
+  selectCell($cell) {
+    this.selection.select($cell)
+    this.$emit('table:select', $cell)
   }
 
   onMousedown(event) {
@@ -24,8 +31,8 @@ export class Table extends ExcelComponent {
       if (event.shiftKey) {
         console.log('just a click', $target.id(true))
         console.log('with shift', this.selection.current.id(true))
-        const target = $target.id(true)
-        const current = this.selection.current.id(true)
+        // const target = $target.id(true)
+        // const current = this.selection.current.id(true)
 
 
         const $cells = matrix(target, current).map(id => this.$root.find(`[data-id="${id}"]`))
@@ -39,6 +46,22 @@ export class Table extends ExcelComponent {
     }
   }
 
+  onKeydown(event) {
+    const keys = ['Enter', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp']
+    const {key} = event
+    if (keys.includes(key) && !event.shiftKey) {
+      event.preventDefault()
+      const id = this.selection.current.id(true)
+      const $next = this.$root.find(nextSelector(key, id))
+      this.selectCell($next)
+    }
+    console.log(event)
+  }
+
+  onInput(event) {
+    this.$emit('table:input', $(event.target))
+  }
+
   prepare() {
     console.log('prepare')
     this.selection = new TableSelection()
@@ -46,13 +69,17 @@ export class Table extends ExcelComponent {
 
   init() {
     super.init()
-
-    console.log('init')
-
-    // this.selection = new TableSelection()
-    const $cell = this.$root.find('[data-id="0:0"]')
-    this.selection.select($cell)
+    this.selectCell(this.$root.find('[data-id="0:0"]'))
     console.log(this)
+
+    this.$on('formula:input', text => {
+      this.selection.current.text(text)
+      console.log('Table from Formula', text)
+    })
+
+    this.$on('formula:done', () => {
+      this.selection.current.focus()
+    })
   }
 
   toHTML() {

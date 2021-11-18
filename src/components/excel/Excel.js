@@ -1,19 +1,24 @@
 import { $ } from '@core/dom'
+import { Emitter } from '../table/emitter'
 
 export class Excel {
     constructor(selector, options) {
         this.$el = $(selector)
         this.components = options.components || []
+        this.emitter = new Emitter()
     }
 
     getRoot() {
-        debugger
         const $root = $.create('div', 'excel')
+
+        const componentOptions = {
+            emitter: this.emitter
+        }
         
         this.components = this.components.map(Component => {
             const $el = $.create('div', Component.className)
-            const component = new Component($el)
-            debugger
+            const component = new Component($el, componentOptions)
+
             if (component.name) {
                 window['c' + component.name] = component
             }
@@ -29,5 +34,9 @@ export class Excel {
         this.$el.append(this.getRoot())
         console.log(this.components)
         this.components.forEach(component => component.init())
+    }
+
+    destroy() {
+        this.components.forEach(component => component.destroy())
     }
 }

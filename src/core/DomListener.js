@@ -10,6 +10,7 @@ export class DomListener {
     }
 
     initDOMListeners() {
+        debugger
         // console.log(this.listeners)
         this.listeners.forEach(listener => {
             const method = getMethodName(listener)
