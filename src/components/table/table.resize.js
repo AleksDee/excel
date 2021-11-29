@@ -1,6 +1,7 @@
 import {$} from '@core/dom'
 
 export function resizeHandler($root, event) {
+  return new Promise(resolve => {
     // console.log(event.target.dataset.resize) 
     const $resizer = $(event.target)
     const $parent = $resizer.closest('[data-type="resizable"]')
@@ -58,7 +59,13 @@ export function resizeHandler($root, event) {
         $parent.css({height: value + 'px'})
       }
 
+      resolve({
+        value,
+        id: type === 'col' ? $parent.data.col : null
+      })
+
       document.onmousemove = null
       document.onmouseup = null
     }
+  })
 }
